@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trailhaus – Demo-Shop</title>
+<style>
+  :root { --green:#2f5d46; --bg:#f6f7f5; --ink:#1d2521; --muted:#66706a; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: system-ui, Arial, sans-serif; background:var(--bg); color:var(--ink); }
+  header { background:var(--green); color:#fff; padding:18px 5vw; display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; }
+  header h1 { margin:0; font-size:22px; }
+  header input, header select { padding:8px 10px; border-radius:6px; border:0; font-size:15px; }
+  main { padding:24px 5vw 100px; }
+  .banner { background:#fff3cd; padding:10px 14px; border-radius:8px; margin-bottom:20px; font-size:14px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:16px; }
+  .card { background:#fff; border-radius:10px; padding:16px; box-shadow:0 1px 4px rgba(0,0,0,.08); display:flex; flex-direction:column; gap:6px; }
+  .card .cat { font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; }
+  .card h3 { margin:0; font-size:16px; }
+  .card p { margin:0; font-size:14px; color:var(--muted); flex:1; }
+  .price { font-weight:700; font-size:18px; }
+  .stock { font-size:13px; }
+  .stock.low { color:#b45309; } .stock.out { color:#b91c1c; }
+  .btn { border:0; background:var(--green); color:#fff; padding:9px 12px; border-radius:6px; font-size:14px; font-weight:600; cursor:pointer; }
+  .btn:disabled { background:#c5cbc7; cursor:not-allowed; }
+  .btn.ghost { background:none; color:var(--green); border:1px solid var(--green); }
+  #cart-btn { background:#fff; color:var(--green); display:flex; align-items:center; gap:6px; }
+  #cart-count { background:var(--green); color:#fff; border-radius:10px; padding:1px 8px; font-size:13px; }
+  #overlay { position:fixed; inset:0; background:rgba(0,0,0,.4); display:none; z-index:20; }
+  #drawer { position:fixed; top:0; right:0; bottom:0; width:min(420px,100vw); background:#fff; z-index:21; transform:translateX(100%); transition:transform .25s; display:flex; flex-direction:column; }
+  body.cart-open #drawer { transform:none; } body.cart-open #overlay { display:block; }
+  #drawer h2 { margin:0; padding:16px 20px; font-size:18px; border-bottom:1px solid #e3e6e3; display:flex; justify-content:space-between; align-items:center; }
+  #cart-items { flex:1; overflow-y:auto; padding:8px 20px; }
+  .ci { display:grid; grid-template-columns:1fr auto; gap:4px 12px; padding:12px 0; border-bottom:1px solid #eef1ee; font-size:14px; }
+  .ci .qty { display:flex; align-items:center; gap:8px; }
+  .ci .qty button { width:26px; height:26px; border:1px solid #cdd3cf; background:#fff; border-radius:6px; cursor:pointer; }
+  .ci .rm { background:none; border:0; color:#b91c1c; cursor:pointer; font-size:13px; padding:0; }
+  .sum { padding:12px 20px; font-size:14px; border-top:1px solid #e3e6e3; }
+  .sum div { display:flex; justify-content:space-between; padding:2px 0; } .sum .tot { font-weight:700; font-size:17px; padding-top:6px; }
+  #co { padding:0 20px 20px; display:flex; flex-direction:column; gap:8px; }
+  #co input { padding:10px; border:1px solid #cdd3cf; border-radius:6px; font-size:14px; }
+  #co-msg { font-size:14px; } #co-msg.err { color:#b91c1c; } #co-msg.ok { color:var(--green); }
+  #coupon-box { padding:10px 20px 0; font-size:14px; } #coupon-form { display:flex; gap:8px; }
+  #coupon-in { flex:1; padding:9px; border:1px solid #cdd3cf; border-radius:6px; font-size:14px; text-transform:uppercase; }
+  #coupon-chip { display:flex; justify-content:space-between; align-items:center; background:#e8f1ec; padding:8px 10px; border-radius:6px; }
+  #coupon-chip.bad { background:#fdecea; } #coupon-msg { margin-top:4px; color:#b91c1c; font-size:13px; }
+  .disc { color:var(--green); }
+  .empty { color:var(--muted); padding:30px 0; text-align:center; }
+  #toast { position:fixed; left:50%; bottom:24px; transform:translateX(-50%); background:var(--ink); color:#fff; padding:10px 16px; border-radius:8px; font-size:14px; opacity:0; transition:opacity .2s; pointer-events:none; z-index:30; }
+  #toast.show { opacity:1; }
+  #chat-toggle { position:fixed; right:20px; bottom:20px; width:58px; height:58px; border-radius:50%; border:0; background:var(--green); color:#fff; font-size:26px; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,.25); }
+  #chat { position:fixed; right:20px; bottom:90px; width:min(380px,calc(100vw - 40px)); height:min(520px,70vh); background:#fff; border-radius:12px; box-shadow:0 8px 28px rgba(0,0,0,.25); display:none; flex-direction:column; overflow:hidden; }
+  #chat.open { display:flex; }
+  #chat-head { background:var(--green); color:#fff; padding:12px 16px; font-weight:600; }
+  #msgs { flex:1; overflow-y:auto; padding:12px; display:flex; flex-direction:column; gap:8px; }
+  .m { max-width:85%; padding:8px 12px; border-radius:12px; font-size:14px; line-height:1.4; white-space:pre-wrap; }
+  .m.user { align-self:flex-end; background:var(--green); color:#fff; }
+  .m.bot { align-self:flex-start; background:#eef1ee; }
+  #chat form { display:flex; border-top:1px solid #e3e6e3; }
+  #chat input { flex:1; border:0; padding:14px; font-size:14px; outline:none; }
+  #chat button { border:0; background:none; color:var(--green); font-weight:700; padding:0 16px; cursor:pointer; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🏔️ Trailhaus <small style="font-weight:400;opacity:.8">Demo-Shop</small></h1>
+  <div>
+    <input id="q" placeholder="Produkt suchen …">
+    <select id="cat"><option value="">Alle Kategorien</option></select>
+    <button class="btn" id="cart-btn" aria-label="Warenkorb öffnen">🛒 Warenkorb <span id="cart-count">0</span></button>
+  </div>
+</header>
+<main>
+  <div class="banner">Fake-Shop zum Testen. Test-Logins: <a href="/api/customers" target="_blank">/api/customers</a> ·
+    Test-Gutscheine: <b>WILLKOMMEN10</b> (10 %), <b>SOMMER20</b> (20 % ab 100 €), <b>SPAR15</b> (15 € ab 80 €), <b>GRATISVERSAND</b>;
+    Fehlerfälle: <b>ABGELAUFEN5</b>, <b>AUSGESCHOEPFT</b></div>
+  <div class="grid" id="grid"></div>
+</main>
+
+<div id="overlay"></div>
+<aside id="drawer" aria-label="Warenkorb">
+  <h2>🛒 Dein Warenkorb <button class="btn ghost" id="cart-close">Schließen</button></h2>
+  <div id="cart-items"></div>
+  <div id="coupon-box">
+    <div id="coupon-form"><input id="coupon-in" placeholder="Gutscheincode" autocomplete="off"><button class="btn ghost" type="button" id="coupon-btn">Einlösen</button></div>
+    <div id="coupon-chip"></div><div id="coupon-msg"></div>
+  </div>
+  <div class="sum" id="cart-sum"></div>
+  <form id="co">
+    <input id="co-name" placeholder="Name" required>
+    <input id="co-email" type="email" placeholder="E-Mail-Adresse" required>
+    <button class="btn" id="co-btn">Zur Kasse (Fake-Bestellung)</button>
+    <div id="co-msg"></div>
+  </form>
+</aside>
+<div id="toast"></div>
+
+<button id="chat-toggle" aria-label="Chat öffnen">💬</button>
+<section id="chat">
+  <div id="chat-head">Trailhaus Assistent</div>
+  <div id="msgs"></div>
+  <form id="form"><input id="input" placeholder="Frag mich etwas …" autocomplete="off"><button>Senden</button></form>
+</section>
+
+<script>
+const $ = s => document.querySelector(s);
+const fmt = n => n.toLocaleString("de-DE", {style:"currency", currency:"EUR"});
+
+async function loadProducts() {
+  const url = `/api/products?q=${encodeURIComponent($("#q").value)}&category=${encodeURIComponent($("#cat").value)}`;
+  const items = await (await fetch(url)).json();
+  $("#grid").innerHTML = items.map(p => `
+    <div class="card">
+      <span class="cat">${p.category}</span><h3>${p.name}</h3><p>${p.description}</p>
+      <span class="price">${fmt(p.price)}</span>
+      <span class="stock ${p.stock === 0 ? "out" : p.stock < 10 ? "low" : ""}">
+        ${p.stock === 0 ? "Ausverkauft" : p.stock < 10 ? "Nur noch " + p.stock + " da" : "Auf Lager"}</span>
+      <button class="btn" data-add="${p.id}" ${p.stock === 0 ? "disabled" : ""}>In den Warenkorb</button>
+    </div>`).join("");
+}
+["Schuhe","Jacken","Rucksäcke","Camping","Zubehör","Elektronik","Bekleidung"].forEach(c =>
+  $("#cat").insertAdjacentHTML("beforeend", `<option>${c}</option>`));
+$("#q").oninput = $("#cat").onchange = loadProducts;
+loadProducts();
+
+// --- Warenkorb ---
+function toast(t) { const el = $("#toast"); el.textContent = t; el.classList.add("show"); setTimeout(() => el.classList.remove("show"), 2200); }
+const api = (url, method, body) => fetch(url, {method, headers:{"Content-Type":"application/json"}, body: body ? JSON.stringify(body) : undefined}).then(r => r.json());
+
+function renderCart(c) {
+  $("#cart-count").textContent = c.item_count;
+  $("#cart-items").innerHTML = c.items.length ? c.items.map(i => `
+    <div class="ci">
+      <strong>${i.name}</strong><span>${fmt(i.line_total)}</span>
+      <div class="qty"><button data-dec="${i.product_id}" data-q="${i.quantity}">−</button>${i.quantity}
+        <button data-inc="${i.product_id}" data-q="${i.quantity}">+</button> <span style="color:var(--muted)">à ${fmt(i.price)}</span></div>
+      <button class="rm" data-rm="${i.product_id}">Entfernen</button>
+    </div>`).join("") : '<div class="empty">Dein Warenkorb ist leer.</div>';
+  $("#cart-sum").innerHTML = c.items.length ? `
+    <div><span>Zwischensumme</span><span>${fmt(c.subtotal)}</span></div>
+    ${c.coupon && c.coupon.active && c.discount > 0 ? `<div class="disc"><span>Rabatt (${c.coupon.code})</span><span>−${fmt(c.discount)}</span></div>` : ""}
+    <div><span>Versand ${c.shipping === 0 ? "(kostenlos)" : "(frei ab " + fmt(c.free_shipping_from) + ")"}</span><span>${fmt(c.shipping)}</span></div>
+    <div class="tot"><span>Gesamt</span><span>${fmt(c.total)}</span></div>` : "";
+  $("#co-btn").disabled = !c.items.length;
+  // Gutschein-Bereich
+  $("#coupon-box").style.display = c.items.length ? "" : "none";
+  $("#coupon-form").style.display = c.coupon ? "none" : "flex";
+  const chip = $("#coupon-chip");
+  chip.style.display = c.coupon ? "flex" : "none";
+  chip.className = c.coupon && !c.coupon.active ? "bad" : "";
+  chip.innerHTML = c.coupon ? `<span>🏷️ <b>${c.coupon.code}</b> – ${c.coupon.label}${c.coupon.active ? "" : " (nicht aktiv)"}</span><button class="rm" data-rmcoupon="1">Entfernen</button>` : "";
+  $("#coupon-msg").textContent = c.coupon && !c.coupon.active ? c.coupon.message : "";
+}
+async function applyCoupon() {
+  const r = await api("/api/cart/coupon", "POST", {code: $("#coupon-in").value});
+  if (r.error) { $("#coupon-msg").textContent = r.error; return; }
+  $("#coupon-in").value = ""; renderCart(r.cart); toast(`Gutschein ${r.code} eingelöst`);
+}
+$("#coupon-btn").onclick = applyCoupon;
+$("#coupon-in").onkeydown = e => { if (e.key === "Enter") applyCoupon(); };
+async function loadCart() { renderCart(await (await fetch("/api/cart")).json()); }
+const setCartOpen = open => document.body.classList.toggle("cart-open", open);
+
+document.addEventListener("click", async e => {
+  const t = e.target;
+  if (t.dataset.add) {
+    const r = await api("/api/cart/items", "POST", {product_id:+t.dataset.add, quantity:1});
+    if (r.error) return toast(r.error);
+    renderCart(r.cart); toast(r.capped ? "Maximale Menge erreicht" : `${r.product} im Warenkorb`);
+  } else if (t.dataset.rmcoupon) {
+    renderCart((await api("/api/cart/coupon", "DELETE")).cart);
+  } else if (t.dataset.inc || t.dataset.dec || t.dataset.rm) {
+    const id = t.dataset.inc || t.dataset.dec || t.dataset.rm, q = +t.dataset.q;
+    const r = t.dataset.rm ? await api(`/api/cart/items/${id}`, "DELETE")
+            : await api(`/api/cart/items/${id}`, "PATCH", {quantity: t.dataset.inc ? q + 1 : q - 1});
+    if (r.error) toast(r.error); else renderCart(r.cart);
+  }
+});
+$("#cart-btn").onclick = () => setCartOpen(true);
+$("#cart-close").onclick = $("#overlay").onclick = () => setCartOpen(false);
+$("#co").onsubmit = async e => {
+  e.preventDefault();
+  const r = await api("/api/checkout", "POST", {name:$("#co-name").value, email:$("#co-email").value});
+  const msg = $("#co-msg");
+  if (r.error) { msg.className = "err"; msg.textContent = r.error; return; }
+  msg.className = "ok";
+  msg.textContent = `Danke! Bestellung ${r.order_id} (${fmt(r.total)}${r.coupon_code ? ", mit " + r.coupon_code : ""}) wurde angelegt. Frag den Chatbot nach dem Status – mit deiner E-Mail.`;
+  loadCart(); loadProducts();
+};
+loadCart();
+
+// --- Chat ---
+const history = [];
+function add(role, text) {
+  const d = document.createElement("div");
+  d.className = "m " + (role === "user" ? "user" : "bot");
+  d.textContent = text; $("#msgs").append(d); $("#msgs").scrollTop = 1e9; return d;
+}
+$("#chat-toggle").onclick = () => {
+  $("#chat").classList.toggle("open");
+  if (!history.length && !$("#msgs").children.length) add("bot", "Hallo! Ich helfe dir bei Produkten, Bestellungen und Fragen zu Versand & Rückgabe.");
+};
+$("#form").onsubmit = async e => {
+  e.preventDefault();
+  const text = $("#input").value.trim(); if (!text) return;
+  $("#input").value = ""; add("user", text); history.push({role:"user", content:text});
+  const wait = add("bot", "…");
+  try {
+    const r = await fetch("/api/chat", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({messages:history})});
+    const data = await r.json(); const reply = data.reply || data.error || "Fehler";
+    wait.textContent = reply; history.push({role:"assistant", content:reply});
+    loadCart(); loadProducts();
+  } catch { wait.textContent = "Verbindungsfehler."; }
+};
+</script>
+</body>
+</html>
