@@ -1,7 +1,8 @@
 # Trailhaus – Fake-Shop mit KI-Chatbot
 
-Demo-Onlineshop (Outdoor-Ausrüstung) mit SQLite-Datenbank und einem Chatbot auf Basis von Claude (Tool Use).
+Demo-Onlineshop (Outdoor-Ausrüstung) mit SQLite-Datenbank und einem Chatbot auf Basis von Claude (Tool Use) oder lokal auf Ollama.
 Der Bot beantwortet Fragen zu Produkten, Bestellungen, Versand und Rückgabe – ausschließlich auf Basis der Datenbank.
+Ziel dieser Demo ist es, mögliche Sicherheitslücken und Schwachstellen des Chatbots zu identifizieren und zu analysieren. 
 
 ## Start
 

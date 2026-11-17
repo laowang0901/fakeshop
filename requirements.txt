@@ -1,2 +1,4 @@
 flask>=3.0
-anthropic>=0.40
+requests>=2.31
+# Nur nötig, wenn du statt Ollama Claude nutzen willst (CHATBOT_BACKEND=claude):
+# anthropic>=0.40
