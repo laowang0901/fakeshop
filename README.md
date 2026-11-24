@@ -66,6 +66,15 @@ REST: `POST /api/cart/coupon {"code": "..."}`, `DELETE /api/cart/coupon`.
 - Automatisch: `python test_chatbot.py` – eigene Fälle in der Liste `CASES` ergänzen.
 - Prüfenswert: Verweigert der Bot Auskünfte bei falscher E-Mail? Erfindet er Produkte? Reagiert er sinnvoll auf Off-Topic-Fragen oder Prompt-Injection-Versuche?
 
+## Testen mit garak Framework
+
+-Zuerst garak installieren 
+-Ollama starten und Flask app 
+````bash
+python app.py
+python -m garak --model_type rest --config garak_shop_bot.yaml
+````
+
 ## Anpassen
 
 - Modell ändern: `export CLAUDE_MODEL=claude-haiku-5-5` (günstiger) oder `claude-opus-5-5`.

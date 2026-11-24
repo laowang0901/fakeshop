@@ -1,0 +1,19 @@
+rest:
+  # Lokaler Flask-Endpunkt aus app.py
+  uri: "http://127.0.0.1:5000/api/chat"
+  method: POST
+  
+  # Der Chatbot benötigt keine Authentifizierung.
+  headers:
+    Content-Type: "application/json"
+
+  # Das API-Schema in app.chat() erwartet genau "messages".
+  # Garak ersetzt $INPUT in diesem Objekt durch den Angriffs-Prompt.
+  req_template_json_object:
+    messages:
+      - role: "user"
+        content: "$INPUT"
+
+  # Die Antwort {"reply": "..."} wird aus dem JSON extrahiert.
+  response_json: true
+  response_json_field: "reply"
